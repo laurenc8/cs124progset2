@@ -27,30 +27,268 @@ vector<vector<int>> naive_multiply (vector<vector<int>>& A, vector<vector<int>>&
     return ans;
 }
 
-vector<vector<int>> strassen_pure (vector<vector<int>>& M1, vector<vector<int>>& M2, int n) {
-    vector<vector<int>> ans(n, vector<int>(0));
-    // vector<vector<int>> p1(n/2, vector<int>(0)), p2(n/2, vector<int>(0)), p3(n/2, vector<int>(0)), p4(n/2, vector<int>(0)),
-    // p5(n/2, vector<int>(0)), p6(n/2, vector<int>(0)), p7(n/2, vector<int>(0));
+void strassen_helper (vector<vector<int>>& M1, vector<vector<int>>& M2, int n, vector<vector<int>> &ans, vector<vector<int>> &ops) {
+    vector<vector<int>> subans(n, vector<int>(n, 0));
 
     if (n==1) {
-        ans[0].emplace_back(M1[0][0]*M2[0][0]);
+        subans[0][0] = M1[0][0]* M2[0][0];
+        for (auto op:ops) {
+            if (op[0]==1) {
+                ans[0][0] += op[1]*subans[0][0];
+            } else if (op[0]==2) {
+                ans[0][1] += op[1]*subans[0][0];
+            } else if (op[0]==3) {
+                ans[1][0] += op[1]*subans[0][0];
+            } else {
+                ans[1][1] += op[1]*subans[0][0];
+            }
+        }
     } else {
-        vector<vector<int>> p1,p2,p3,p4,p5,p6,p7;
+        // calculate subans
         vector<vector<int>> m1(n/2, vector<int>(0)), m2(n/2, vector<int>(0));
-
+        vector<vector<int>> ops;
         // this is for p1
-        for (int i=0; i<n/2; i++) {
-            for (int j=0; j<n/2; j++) {
-                m1[i].emplace_back(M1[i][j]);
+        // before every step reset subans to 0
+        for (int i=0; i<n; i++){
+            for (int j=0; j<n; j++) {
+                subans[i][j]=0;
             }
         }
         for (int i=0; i<n/2; i++) {
             for (int j=0; j<n/2; j++) {
+                m1[i].emplace_back(M1[i][j]);
                 m2[i].emplace_back(M2[i][j+n/2]);
                 m2[i][j] -= M2[i+n/2][j+n/2];
             }
         }
-        p1 = strassen_pure(m1, m2, n/2);
+        ops = {{2,1},{4,1}};
+        strassen_helper(m1, m2, n/2, subans, ops);
+        for (auto op:ops) {
+            for (int i=0; i<n; i++) {
+                for (int j=0; j<n; j++) {
+                    if (op[0]==1) {
+                        ans[i][j] += op[1]*subans[i][j];
+                    } else if (op[0]==2) {
+                        ans[i][j+n] += op[1]*subans[i][j];
+                    } else if (op[0]==3) {
+                        ans[i+n][j] += op[1]*subans[i][j];
+                    } else {
+                        ans[i+n][j+n] += op[1]*subans[i][j];
+                    }
+                }
+            }
+        }
+
+
+        // this is for p2
+        // before every step reset subans to 0
+        for (int i=0; i<n; i++){
+            for (int j=0; j<n; j++) {
+                subans[i][j]=0;
+            }
+        }
+        for (int i=0; i<n/2; i++) {
+            for (int j=0; j<n/2; j++) {
+                m1[i][j] = M1[i][j] + M1[i][j+n/2];
+                m2[i][j] = M2[i+n/2][j+n/2];
+            }
+        }
+        ops ={{1,-1},{2,1}};
+        strassen_helper(m1, m2, n/2, subans, ops);
+        for (auto op:ops) {
+            for (int i=0; i<n; i++) {
+                for (int j=0; j<n; j++) {
+                    if (op[0]==1) {
+                        ans[i][j] += op[1]*subans[i][j];
+                    } else if (op[0]==2) {
+                        ans[i][j+n] += op[1]*subans[i][j];
+                    } else if (op[0]==3) {
+                        ans[i+n][j] += op[1]*subans[i][j];
+                    } else {
+                        ans[i+n][j+n] += op[1]*subans[i][j];
+                    }
+                }
+            }
+        }
+
+
+        // this is for p3
+        // before every step reset subans to 0
+        for (int i=0; i<n; i++){
+            for (int j=0; j<n; j++) {
+                subans[i][j]=0;
+            }
+        }
+        for (int i=0; i<n/2; i++) {
+            for (int j=0; j<n/2; j++) {
+                m1[i][j] = M1[i+n/2][j] + M1[i+n/2][j+n/2];
+                m2[i][j] = M2[i][j];
+            }
+        }
+        ops = {{3,1},{4,-1}};
+        strassen_helper(m1, m2, n/2, subans, ops);
+        for (auto op:ops) {
+            for (int i=0; i<n; i++) {
+                for (int j=0; j<n; j++) {
+                    if (op[0]==1) {
+                        ans[i][j] += op[1]*subans[i][j];
+                    } else if (op[0]==2) {
+                        ans[i][j+n] += op[1]*subans[i][j];
+                    } else if (op[0]==3) {
+                        ans[i+n][j] += op[1]*subans[i][j];
+                    } else {
+                        ans[i+n][j+n] += op[1]*subans[i][j];
+                    }
+                }
+            }
+        }
+
+
+        // this is for p4
+        // before every step reset subans to 0
+        for (int i=0; i<n; i++){
+            for (int j=0; j<n; j++) {
+                subans[i][j]=0;
+            }
+        }
+        for (int i=0; i<n/2; i++) {
+            for (int j=0; j<n/2; j++) {
+                m1[i][j] = M1[i+n/2][j+n/2];
+                m2[i][j] = M2[i+n/2][j] - M2[i][j];
+            }
+        }
+        ops = {{1,1},{3,1}};
+        strassen_helper(m1, m2, n/2, subans, ops);
+        for (auto op:ops) {
+            for (int i=0; i<n; i++) {
+                for (int j=0; j<n; j++) {
+                    if (op[0]==1) {
+                        ans[i][j] += op[1]*subans[i][j];
+                    } else if (op[0]==2) {
+                        ans[i][j+n] += op[1]*subans[i][j];
+                    } else if (op[0]==3) {
+                        ans[i+n][j] += op[1]*subans[i][j];
+                    } else {
+                        ans[i+n][j+n] += op[1]*subans[i][j];
+                    }
+                }
+            }
+        }
+
+        // this is for p5
+        // before every step reset subans to 0
+        for (int i=0; i<n; i++){
+            for (int j=0; j<n; j++) {
+                subans[i][j]=0;
+            }
+        }
+        for (int i=0; i<n/2; i++) {
+            for (int j=0; j<n/2; j++) {
+                m1[i][j] = M1[i][j] + M1[i+n/2][j+n/2];
+                m2[i][j] = M2[i][j] + M2[i+n/2][j+n/2];
+            }
+        }
+        ops ={{1,1},{4,1}};
+        strassen_helper(m1, m2, n/2, subans, ops);
+        for (auto op:ops) {
+            for (int i=0; i<n; i++) {
+                for (int j=0; j<n; j++) {
+                    if (op[0]==1) {
+                        ans[i][j] += op[1]*subans[i][j];
+                    } else if (op[0]==2) {
+                        ans[i][j+n] += op[1]*subans[i][j];
+                    } else if (op[0]==3) {
+                        ans[i+n][j] += op[1]*subans[i][j];
+                    } else {
+                        ans[i+n][j+n] += op[1]*subans[i][j];
+                    }
+                }
+            }
+        }
+
+
+        // this is for p6
+        // before every step reset subans to 0
+        for (int i=0; i<n; i++){
+            for (int j=0; j<n; j++) {
+                subans[i][j]=0;
+            }
+        }
+        for (int i=0; i<n/2; i++) {
+            for (int j=0; j<n/2; j++) {
+                m1[i][j] = M1[i][j+n/2] - M1[i+n/2][j+n/2];
+                m2[i][j] = M2[i+n/2][j] + M2[i+n/2][j+n/2];
+            }
+        }
+        ops = {{1,1}};
+        strassen_helper(m1, m2, n/2, subans, ops);
+        for (auto op:ops) {
+            for (int i=0; i<n; i++) {
+                for (int j=0; j<n; j++) {
+                    if (op[0]==1) {
+                        ans[i][j] += op[1]*subans[i][j];
+                    } else if (op[0]==2) {
+                        ans[i][j+n] += op[1]*subans[i][j];
+                    } else if (op[0]==3) {
+                        ans[i+n][j] += op[1]*subans[i][j];
+                    } else {
+                        ans[i+n][j+n] += op[1]*subans[i][j];
+                    }
+                }
+            }
+        }
+
+        // this is for p7
+        // before every step reset subans to 0
+        for (int i=0; i<n; i++){
+            for (int j=0; j<n; j++) {
+                subans[i][j]=0;
+            }
+        }
+        for (int i=0; i<n/2; i++) {
+            for (int j=0; j<n/2; j++) {
+                m1[i][j] = M1[i][j] - M1[i+n/2][j];
+                m2[i][j] = M2[i][j] + M2[i][j+n/2];
+            }
+        }
+        ops = {{4,-1}};
+        strassen_helper(m1, m2, n/2, subans, ops);
+        for (auto op:ops) {
+            for (int i=0; i<n; i++) {
+                for (int j=0; j<n; j++) {
+                    if (op[0]==1) {
+                        ans[i][j] += op[1]*subans[i][j];
+                    } else if (op[0]==2) {
+                        ans[i][j+n] += op[1]*subans[i][j];
+                    } else if (op[0]==3) {
+                        ans[i+n][j] += op[1]*subans[i][j];
+                    } else {
+                        ans[i+n][j+n] += op[1]*subans[i][j];
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+vector<vector<int>> strassen_pure (vector<vector<int>>& M1, vector<vector<int>>& M2, int n) {
+    vector<vector<int>> ans(n, vector<int>(n, 0));
+    if (n==1) {
+        ans[0][0]=M1[0][0]*M2[0][0];
+    } else {
+        vector<vector<int>> m1(n/2, vector<int>(0)), m2(n/2, vector<int>(0));
+        vector<vector<int>> ops;
+        // this is for p1
+        for (int i=0; i<n/2; i++) {
+            for (int j=0; j<n/2; j++) {
+                m1[i].emplace_back(M1[i][j]);
+                m2[i].emplace_back(M2[i][j+n/2]);
+                m2[i][j] -= M2[i+n/2][j+n/2];
+            }
+        }
+        ops = {{2,1},{4,1}};
+        strassen_helper(m1, m2, n/2, ans, ops);
 
         // p2
         for (int i=0; i<n/2; i++) {
@@ -59,7 +297,8 @@ vector<vector<int>> strassen_pure (vector<vector<int>>& M1, vector<vector<int>>&
                 m2[i][j] = M2[i+n/2][j+n/2];
             }
         }
-        p2 = strassen_pure(m1, m2, n/2);
+        ops = {{1,-1},{2,1}};
+        strassen_helper(m1, m2, n/2, ans, ops);
 
         // p3
         for (int i=0; i<n/2; i++) {
@@ -68,7 +307,8 @@ vector<vector<int>> strassen_pure (vector<vector<int>>& M1, vector<vector<int>>&
                 m2[i][j] = M2[i][j];
             }
         }
-        p3 = strassen_pure(m1, m2, n/2);
+        ops = {{3,1},{4,-1}};
+        strassen_helper(m1, m2, n/2, ans, ops);
 
         // p4
         for (int i=0; i<n/2; i++) {
@@ -77,7 +317,8 @@ vector<vector<int>> strassen_pure (vector<vector<int>>& M1, vector<vector<int>>&
                 m2[i][j] = M2[i+n/2][j] - M2[i][j];
             }
         }
-        p4 = strassen_pure(m1, m2, n/2);
+        ops = {{1,1},{3,1}};
+        strassen_helper(m1, m2, n/2, ans, ops);
 
         // p5
         for (int i=0; i<n/2; i++) {
@@ -86,7 +327,8 @@ vector<vector<int>> strassen_pure (vector<vector<int>>& M1, vector<vector<int>>&
                 m2[i][j] = M2[i][j] + M2[i+n/2][j+n/2];
             }
         }
-        p5 = strassen_pure(m1, m2, n/2);
+        ops = {{1,1},{4,1}};
+        strassen_helper(m1, m2, n/2, ans, ops);
 
         // p6
         for (int i=0; i<n/2; i++) {
@@ -95,7 +337,8 @@ vector<vector<int>> strassen_pure (vector<vector<int>>& M1, vector<vector<int>>&
                 m2[i][j] = M2[i+n/2][j] + M2[i+n/2][j+n/2];
             }
         }
-        p6 = strassen_pure(m1, m2, n/2);
+        ops ={{1, 1}};
+        strassen_helper(m1, m2, n/2, ans, ops);
 
         // p7
         for (int i=0; i<n/2; i++) {
@@ -104,260 +347,13 @@ vector<vector<int>> strassen_pure (vector<vector<int>>& M1, vector<vector<int>>&
                 m2[i][j] = M2[i][j] + M2[i][j+n/2];
             }
         }
-        p7 = strassen_pure(m1, m2, n/2);
-
-        // recombine
-        for (int i=0; i<n/2; i++) {
-            for (int j=0; j<n/2; j++) {
-                ans[i].emplace_back(p4[i][j] + p5[i][j] + p6[i][j] - p2[i][j]);
-            }
-            for (int j=0; j<n/2; j++) {
-                ans[i].emplace_back(p1[i][j] + p2[i][j]);
-            }
-            for (int j=0; j<n/2; j++) {
-                ans[i+n/2].emplace_back(p3[i][j] + p4[i][j]);
-            }
-            for (int j=0; j<n/2; j++) {
-                ans[i+n/2].emplace_back(p1[i][j] + p5[i][j] - p3[i][j] - p7[i][j]);
-            }
-        }
+        ops = {{4, -1}};
+        strassen_helper(m1, m2, n/2, ans, ops);
     }
     return ans;
 }
 
 
-void strassen_helper (vector<vector<int>>& M1, vector<vector<int>>& M2, int n, vector<vector<int>> &ans, vector<vector<int>> &ops) {
-    vector<vector<int>> subans(n, vector<int>(n, 0));
-
-    // calculate subans
-    vector<vector<int>> m1(n/2, vector<int>(0)), m2(n/2, vector<int>(0));
-
-    // this is for p1
-    // before every step reset subans to 0
-    for (int i=0; i<n; i++){
-        for (int j=0; j<n; j++) {
-            subans[i][j]=0;
-        }
-    }
-    for (int i=0; i<n/2; i++) {
-        for (int j=0; j<n/2; j++) {
-            m1[i].emplace_back(M1[i][j]);
-        }
-    }
-    for (int i=0; i<n/2; i++) {
-        for (int j=0; j<n/2; j++) {
-            m2[i].emplace_back(M2[i][j+n/2]);
-            m2[i][j] -= M2[i+n/2][j+n/2];
-        }
-    }
-    strassen_helper(m1, m2, n/2, subans, {{2,1},{4,1}});
-    for (auto op:ops) {
-        for (int i=0; i<n; i++) {
-            for (int j=0; j<n; j++) {
-                if (op[0]==1) {
-                    ans[i][j] += op[1]*subans[i][j];
-                } else if (op[0]==2) {
-                    ans[i][j+n] += op[1]*subans[i][j];
-                } else if (op[0]==3) {
-                    ans[i+n][j] += op[1]*subans[i][j];
-                } else {
-                    ans[i+n][j+n] += op[1]*subans[i][j];
-                }
-            }
-        }
-    }
-
-
-    // this is for p2
-    // before every step reset subans to 0
-    for (int i=0; i<n; i++){
-        for (int j=0; j<n; j++) {
-            subans[i][j]=0;
-        }
-    }
-    for (int i=0; i<n/2; i++) {
-            for (int j=0; j<n/2; j++) {
-                m1[i][j] = M1[i][j] + M1[i][j+n/2];
-                m2[i][j] = M2[i+n/2][j+n/2];
-            }
-        }
-    strassen_helper(m1, m2, n/2, subans, {{1,-1},{2,1}});
-    for (auto op:ops) {
-        for (int i=0; i<n; i++) {
-            for (int j=0; j<n; j++) {
-                if (op[0]==1) {
-                    ans[i][j] += op[1]*subans[i][j];
-                } else if (op[0]==2) {
-                    ans[i][j+n] += op[1]*subans[i][j];
-                } else if (op[0]==3) {
-                    ans[i+n][j] += op[1]*subans[i][j];
-                } else {
-                    ans[i+n][j+n] += op[1]*subans[i][j];
-                }
-            }
-        }
-    }
-
-
-    // this is for p3
-    // before every step reset subans to 0
-    for (int i=0; i<n; i++){
-        for (int j=0; j<n; j++) {
-            subans[i][j]=0;
-        }
-    }
-    for (int i=0; i<n/2; i++) {
-        for (int j=0; j<n/2; j++) {
-            m1[i][j] = M1[i+n/2][j] + M1[i+n/2][j+n/2];
-            m2[i][j] = M2[i][j];
-        }
-    }
-    strassen_helper(m1, m2, n/2, subans, {{3,1},{4,-1}});
-    for (auto op:ops) {
-        for (int i=0; i<n; i++) {
-            for (int j=0; j<n; j++) {
-                if (op[0]==1) {
-                    ans[i][j] += op[1]*subans[i][j];
-                } else if (op[0]==2) {
-                    ans[i][j+n] += op[1]*subans[i][j];
-                } else if (op[0]==3) {
-                    ans[i+n][j] += op[1]*subans[i][j];
-                } else {
-                    ans[i+n][j+n] += op[1]*subans[i][j];
-                }
-            }
-        }
-    }
-
-
-    // this is for p4
-    // before every step reset subans to 0
-    for (int i=0; i<n; i++){
-        for (int j=0; j<n; j++) {
-            subans[i][j]=0;
-        }
-    }
-    for (int i=0; i<n/2; i++) {
-        for (int j=0; j<n/2; j++) {
-            m1[i][j] = M1[i+n/2][j+n/2];
-            m2[i][j] = M2[i+n/2][j] - M2[i][j];
-        }
-    }
-    strassen_helper(m1, m2, n/2, subans, {{1,1},{3,1}});
-    for (auto op:ops) {
-        for (int i=0; i<n; i++) {
-            for (int j=0; j<n; j++) {
-                if (op[0]==1) {
-                    ans[i][j] += op[1]*subans[i][j];
-                } else if (op[0]==2) {
-                    ans[i][j+n] += op[1]*subans[i][j];
-                } else if (op[0]==3) {
-                    ans[i+n][j] += op[1]*subans[i][j];
-                } else {
-                    ans[i+n][j+n] += op[1]*subans[i][j];
-                }
-            }
-        }
-    }
-
-    // this is for p5
-    // before every step reset subans to 0
-    for (int i=0; i<n; i++){
-        for (int j=0; j<n; j++) {
-            subans[i][j]=0;
-        }
-    }
-    for (int i=0; i<n/2; i++) {
-        for (int j=0; j<n/2; j++) {
-            m1[i][j] = M1[i][j] + M1[i+n/2][j+n/2];
-            m2[i][j] = M2[i][j] + M2[i+n/2][j+n/2];
-        }
-    }
-    strassen_helper(m1, m2, n/2, subans, {{1,1},{4,1}});
-    for (auto op:ops) {
-        for (int i=0; i<n; i++) {
-            for (int j=0; j<n; j++) {
-                if (op[0]==1) {
-                    ans[i][j] += op[1]*subans[i][j];
-                } else if (op[0]==2) {
-                    ans[i][j+n] += op[1]*subans[i][j];
-                } else if (op[0]==3) {
-                    ans[i+n][j] += op[1]*subans[i][j];
-                } else {
-                    ans[i+n][j+n] += op[1]*subans[i][j];
-                }
-            }
-        }
-    }
-
-
-    // this is for p6
-    // before every step reset subans to 0
-    for (int i=0; i<n; i++){
-        for (int j=0; j<n; j++) {
-            subans[i][j]=0;
-        }
-    }
-    for (int i=0; i<n/2; i++) {
-        for (int j=0; j<n/2; j++) {
-            m1[i][j] = M1[i][j+n/2] - M1[i+n/2][j+n/2];
-            m2[i][j] = M2[i+n/2][j] + M2[i+n/2][j+n/2];
-        }
-    }
-    strassen_helper(m1, m2, n/2, subans, {{1,1}});
-    for (auto op:ops) {
-        for (int i=0; i<n; i++) {
-            for (int j=0; j<n; j++) {
-                if (op[0]==1) {
-                    ans[i][j] += op[1]*subans[i][j];
-                } else if (op[0]==2) {
-                    ans[i][j+n] += op[1]*subans[i][j];
-                } else if (op[0]==3) {
-                    ans[i+n][j] += op[1]*subans[i][j];
-                } else {
-                    ans[i+n][j+n] += op[1]*subans[i][j];
-                }
-            }
-        }
-    }
-
-
-    // this is for p7
-    // before every step reset subans to 0
-    for (int i=0; i<n; i++){
-        for (int j=0; j<n; j++) {
-            subans[i][j]=0;
-        }
-    }
-    for (int i=0; i<n/2; i++) {
-        for (int j=0; j<n/2; j++) {
-            m1[i][j] = M1[i][j] - M1[i+n/2][j];
-            m2[i][j] = M2[i][j] + M2[i][j+n/2];
-        }
-    }
-    strassen_helper(m1, m2, n/2, subans, {{4,-1}});
-    for (auto op:ops) {
-        for (int i=0; i<n; i++) {
-            for (int j=0; j<n; j++) {
-                if (op[0]==1) {
-                    ans[i][j] += op[1]*subans[i][j];
-                } else if (op[0]==2) {
-                    ans[i][j+n] += op[1]*subans[i][j];
-                } else if (op[0]==3) {
-                    ans[i+n][j] += op[1]*subans[i][j];
-                } else {
-                    ans[i+n][j+n] += op[1]*subans[i][j];
-                }
-            }
-        }
-    }
-
-
-
-    // modify approrpriate values in ans?
-
-
-}
 
 int main() {
     // naive test
