@@ -229,9 +229,8 @@ int main(int argc, char** argv) {
     auto d1 = chrono::duration_cast<chrono::milliseconds>(t2 - t1);
     
 
-    vector<int> naive = naive_multiply(matrix_list[3*count-3], matrix_list[3*count-2], upper);
-
     if (flag) {
+        vector<int> naive = naive_multiply(matrix_list[3*count-3], matrix_list[3*count-2], upper);
         for (int i=0; i<upper; i++) cout << naive[i] << " ";
         cout << endl;
     }
