@@ -56,8 +56,8 @@ void strassen (vector<int>* matrix_list, int depth) {
     // add matrix_list[3*depth-1] to second and fourth quadrant of matrix_list[3*depth+2] 
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth+2][(j+n/2)+i*n] += matrix_list[3*depth-1][j+i*n/2];
-            matrix_list[3*depth+2][(j+n/2)+(i+n/2)*n] += matrix_list[3*depth-1][j+i*n/2];
+            matrix_list[3*depth+2][(j+n/2)+i*n] = matrix_list[3*depth-1][j+i*n/2]; // + second quadrant
+            matrix_list[3*depth+2][(j+n/2)+(i+n/2)*n] = matrix_list[3*depth-1][j+i*n/2]; // + fourth quadrant
         }
     }
 
@@ -72,7 +72,7 @@ void strassen (vector<int>* matrix_list, int depth) {
     strassen(matrix_list, depth-1);
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth+2][j+i*n] -= matrix_list[3*depth-1][j+i*n/2]; // - first quadrant
+            matrix_list[3*depth+2][j+i*n] = - matrix_list[3*depth-1][j+i*n/2]; // - first quadrant
             matrix_list[3*depth+2][(j+n/2)+i*n] += matrix_list[3*depth-1][j+i*n/2]; // + second quadrant
         }
     }
@@ -87,7 +87,7 @@ void strassen (vector<int>* matrix_list, int depth) {
     strassen(matrix_list, depth-1);
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth+2][j+(i+n/2)*n] += matrix_list[3*depth-1][j+i*n/2]; // + third quadrant
+            matrix_list[3*depth+2][j+(i+n/2)*n] = matrix_list[3*depth-1][j+i*n/2]; // + third quadrant
             matrix_list[3*depth+2][(j+n/2)+(i+n/2)*n] -= matrix_list[3*depth-1][j+i*n/2]; // - fourth quadrant
         }
     }
@@ -156,17 +156,19 @@ void strassen (vector<int>* matrix_list, int depth) {
 
 
 
-//int argc, char** argv
-int main() {
-    
-    int dimension;
-    cin >> dimension;
+//
+int main(int argc, char** argv) {
+    if (argc < 2 || argc > 4) {
+        cout << "usage : ./strassen flag dimension inputfile" << endl;
+        return 0;
+    }
+    // non-negative flag will use inputfile, negative flag will use RNG
+    int dimension = stoi(argv[2]), flag = stoi(argv[1]);
     const int count = ceil(log2(dimension))+1;
-    // cout << count;
+    int upper = ((int)pow(2,count-1));
+
 
     // create array of matrices
-
-
     vector<int> matrix_list[3*count];
     for (int d=0; d<count; d++) {
         for (int j=0; j<3; j++) {
@@ -174,65 +176,75 @@ int main() {
         }
     }
 
-    // cout << matrix_list[0][0] << endl;
-    // for(int i=0; i<count; i++) cout << matrix_list[3*i].size() << " ";
+    if (flag >= 0) {
+        ifstream INFILE;
+        INFILE.open(argv[3]);
+        if(!INFILE) {
+            cout << "File cannot be opened" << endl;
+            return -1;
+        }
+        for (int num=0; num<2; num++) {
+            for (int i=0; i<dimension; i++) {
+                for (int j=0; j<dimension; j++) {
+                    INFILE >> matrix_list[3*count - 3 + num][j+upper*i];
+                }
+            }
+        }
+        INFILE.close();
+        
+        if (flag > 0) {
+            for (int i: matrix_list[3*count-3]) cout << i << " ";
+            cout << endl;
+            for (int i: matrix_list[3*count-2]) cout << i << " ";
+            cout << endl;
+        }
+    }
 
     // assign matrix_list[3*count - 3] = M1, matrix_list[3*count - 2] = M2. 
     // Answer will be matrix_list[3*count-1] ..
 
-    // stress test
-    srand((unsigned)time(NULL));
-    vector<int> bm1(dimension*dimension, 0), bm2(dimension*dimension, 0);
-    for (int i=0; i<dimension; i++) {
-        for (int j=0; j<dimension; j++) {
-            bm1[j+i*dimension] = rand()%2;
-            bm2[j+i*dimension] = rand()%2;
+    if (flag < 0) { // stress test
+        srand((unsigned)time(NULL));
+        
+        for (int num=0; num<2; num++) {
+            for (int i=0; i<dimension; i++) {
+                for (int j=0; j<dimension; j++) {
+                    matrix_list[3*count - 3 + num][j+upper*i] = rand()%2;
+                }
+            }
         }
     }
-
-    matrix_list[3*count - 3] = bm1;
-    matrix_list[3*count - 2] = bm2;
+    
 
     auto t1 = chrono::high_resolution_clock::now();
     strassen(matrix_list, count-1);
 
-    // for (int i=0; i<dimension; i++) cout << matrix_list[3*count-1][i] << " ";
-    // cout << endl;
+    if (flag) {
+        for (int i=0; i<upper; i++) cout << matrix_list[3*count-1][i] << " ";
+        cout << endl;
+    }
+    
 
     auto t2 = chrono::high_resolution_clock::now();
     auto d1 = chrono::duration_cast<chrono::milliseconds>(t2 - t1);
-    cout << "strassen took " << d1.count() << " ms | ";
+    
 
-    vector<int> naive = naive_multiply(matrix_list[3*count-3], matrix_list[3*count-2], dimension);
-    // for (int i=0; i<dimension; i++) cout << naive[i] << " ";
-    // cout << endl;
+    vector<int> naive = naive_multiply(matrix_list[3*count-3], matrix_list[3*count-2], upper);
+
+    if (flag) {
+        for (int i=0; i<upper; i++) cout << naive[i] << " ";
+        cout << endl;
+    }
+    
 
     auto t3 = chrono::high_resolution_clock::now();
     auto d2 = chrono::duration_cast<chrono::milliseconds>(t3 - t2);
-    cout << "naive took " << d2.count() << " ms | ";
-
-
+    if (flag) {
+        cout << "strassen took " << d1.count() << " ms | " << endl;
+        cout << "naive took " << d2.count() << " ms | ";
+    }
     
-    // strassen(matrix_list)
-
-    // vector<int> A = {1,2,3,4}, B={0,1,1,0};
-    // vector<int> ans = naive_multiply(A,B, 2);
-    // for (int i:ans ) cout << i << " " ;
-
-
-    // for (int i:bm1[0]) cout << i << " ";
-
-    // auto t1 = chrono::high_resolution_clock::now();
-    
-    // vector<vector<int>> ans = strassen_pure(bm1, bm2, n);
-
-    // auto t2 = chrono::high_resolution_clock::now();
-    // auto d1 = chrono::duration_cast<chrono::milliseconds>(t2 - t1);
-    // cout << "strassen took " << d1.count() << " ms | ";
-
-    // ans =  naive_multiply(bm1, bm2, n);
-
-    // auto t3 = chrono::high_resolution_clock::now();
-    // auto d2 = chrono::duration_cast<chrono::milliseconds>(t3 - t2);
-    // cout << "naive took " << d2.count() << " ms | ";
+    for (int i=0; i<dimension; i++) {
+        cout << matrix_list[3*count-1][i+i*upper] << endl;
+    }
 }
