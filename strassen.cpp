@@ -219,7 +219,7 @@ int main(int argc, char** argv) {
     auto t1 = chrono::high_resolution_clock::now();
     strassen(matrix_list, count-1);
 
-    if (flag) {
+    if (flag == 1 || flag == -1) {
         for (int i=0; i<upper; i++) cout << matrix_list[3*count-1][i] << " ";
         cout << endl;
     }
@@ -231,16 +231,19 @@ int main(int argc, char** argv) {
 
     if (flag) {
         vector<int> naive = naive_multiply(matrix_list[3*count-3], matrix_list[3*count-2], upper);
-        for (int i=0; i<upper; i++) cout << naive[i] << " ";
-        cout << endl;
+        if (flag == 1 || flag == -1) {    
+            for (int i=0; i<upper; i++) cout << naive[i] << " ";
+            cout << endl;
+        }
     }
+    
     
 
     auto t3 = chrono::high_resolution_clock::now();
     auto d2 = chrono::duration_cast<chrono::milliseconds>(t3 - t2);
     if (flag) {
         cout << "strassen took " << d1.count() << " ms | " << endl;
-        cout << "naive took " << d2.count() << " ms | ";
+        cout << "naive took " << d2.count() << " ms | " << endl;
     }
     
     for (int i=0; i<dimension; i++) {
