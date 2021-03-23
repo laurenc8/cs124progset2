@@ -15,14 +15,11 @@ using namespace std;
 
 vector<int> naive_multiply (vector<int>& A, vector<int>& B, int n) {
     vector<int> ans(n*n,0);
-    int entry = 0;
     for (int i=0; i<n; i++) {
         for (int k=0; k<n; k++) {
-            entry = 0;
             for (int j=0; j<n; j++) {
-                entry += (A[j+i*n]) * (B[k+j*n]);
+                ans[k+i*n] += (A[j+i*n]) * (B[k+j*n]);
             }
-            ans[k+i*n] = entry;
         }
     }
     return ans;
