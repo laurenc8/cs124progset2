@@ -27,7 +27,8 @@ vector<int> naive_multiply (vector<int>& A, vector<int>& B, int n) {
 }
 
 void naive_multiply_recursion (vector<int>* matrix_list, int depth, vector<int>& sizes) {
-    int n = sizes[depth];
+    int n = sizes[depth]; 
+    for (int &i: matrix_list[3*depth+2]) i=0;
     for (int i=0; i<n; i++) {
         for (int k=0; k<n; k++) {
             for (int j=0; j<n; j++) {
@@ -37,39 +38,34 @@ void naive_multiply_recursion (vector<int>* matrix_list, int depth, vector<int>&
     }
 }
 
+const int n0 = 100;
 
-void strassen (vector<int>* matrix_list, int depth) {
+void strassen (vector<int>* matrix_list, int depth, vector<int>& sizes) {
     // base case 
-    if (depth == 0) {
-        matrix_list[2][0] = matrix_list[0][0]*matrix_list[1][0];
+    if (sizes[depth] <n0) {
+        naive_multiply_recursion(matrix_list, depth, sizes); 
         return;
     }
-    // if (sizes[depth] <n0) {
-    //     do naive 
-    // }
 
-    // otherwise
-
-    // on this level the matrices are 2^depth size
     // factors are matrix_list[3*depth], matrix_list[3*depth+1], answer is matrix_list[3*depth+2]
-    int n = (int)pow(2, depth);
+    int n = sizes[depth], m =sizes[depth-1];
 
     // factors on the level below: matrix_list[3*depth-3], matrix_list[3*depth-2]
 
     // compute p1
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth-3][j+i*n/2] = matrix_list[3*depth][j+i*n]; // A
-            matrix_list[3*depth-2][j+i*n/2] = matrix_list[3*depth+1][(j+n/2) + i*n] - matrix_list[3*depth+1][(j+n/2)+ (i+n/2)*n]; // F-H
+            matrix_list[3*depth-3][j+i*m] = matrix_list[3*depth][j+i*n]; // A
+            matrix_list[3*depth-2][j+i*m] = matrix_list[3*depth+1][(j+n/2) + i*n] - matrix_list[3*depth+1][(j+n/2)+ (i+n/2)*n]; // F-H
         }
     }
-    strassen(matrix_list, depth-1);
+    strassen(matrix_list, depth-1, sizes);
     // result of multiplication is matrix_list[3*depth-1]
     // add matrix_list[3*depth-1] to second and fourth quadrant of matrix_list[3*depth+2] 
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth+2][(j+n/2)+i*n] = matrix_list[3*depth-1][j+i*n/2]; // + second quadrant
-            matrix_list[3*depth+2][(j+n/2)+(i+n/2)*n] = matrix_list[3*depth-1][j+i*n/2]; // + fourth quadrant
+            matrix_list[3*depth+2][(j+n/2)+i*n] = matrix_list[3*depth-1][j+i*m]; // + second quadrant
+            matrix_list[3*depth+2][(j+n/2)+(i+n/2)*n] = matrix_list[3*depth-1][j+i*m]; // + fourth quadrant
         }
     }
 
@@ -77,45 +73,45 @@ void strassen (vector<int>* matrix_list, int depth) {
     // compute p2
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth-3][j+i*n/2] = matrix_list[3*depth][j+i*n] + matrix_list[3*depth][(j+n/2)+i*n]; // A+B
-            matrix_list[3*depth-2][j+i*n/2] = matrix_list[3*depth+1][(j+n/2)+ (i+n/2)*n]; // H
+            matrix_list[3*depth-3][j+i*m] = matrix_list[3*depth][j+i*n] + matrix_list[3*depth][(j+n/2)+i*n]; // A+B
+            matrix_list[3*depth-2][j+i*m] = matrix_list[3*depth+1][(j+n/2)+ (i+n/2)*n]; // H
         }
     }
-    strassen(matrix_list, depth-1);
+    strassen(matrix_list, depth-1, sizes);
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth+2][j+i*n] = - matrix_list[3*depth-1][j+i*n/2]; // - first quadrant
-            matrix_list[3*depth+2][(j+n/2)+i*n] += matrix_list[3*depth-1][j+i*n/2]; // + second quadrant
+            matrix_list[3*depth+2][j+i*n] = - matrix_list[3*depth-1][j+i*m]; // - first quadrant
+            matrix_list[3*depth+2][(j+n/2)+i*n] += matrix_list[3*depth-1][j+i*m]; // + second quadrant
         }
     }
 
     // compute p3
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth-3][j+i*n/2] = matrix_list[3*depth][j+(i+n/2)*n] + matrix_list[3*depth][(j+n/2)+(i+n/2)*n]; // C+D
-            matrix_list[3*depth-2][j+i*n/2] = matrix_list[3*depth+1][j+i*n]; // E
+            matrix_list[3*depth-3][j+i*m] = matrix_list[3*depth][j+(i+n/2)*n] + matrix_list[3*depth][(j+n/2)+(i+n/2)*n]; // C+D
+            matrix_list[3*depth-2][j+i*m] = matrix_list[3*depth+1][j+i*n]; // E
         }
     }
-    strassen(matrix_list, depth-1);
+    strassen(matrix_list, depth-1, sizes);
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth+2][j+(i+n/2)*n] = matrix_list[3*depth-1][j+i*n/2]; // + third quadrant
-            matrix_list[3*depth+2][(j+n/2)+(i+n/2)*n] -= matrix_list[3*depth-1][j+i*n/2]; // - fourth quadrant
+            matrix_list[3*depth+2][j+(i+n/2)*n] = matrix_list[3*depth-1][j+i*m]; // + third quadrant
+            matrix_list[3*depth+2][(j+n/2)+(i+n/2)*n] -= matrix_list[3*depth-1][j+i*m]; // - fourth quadrant
         }
     }
 
     // compute p4
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth-3][j+i*n/2] = matrix_list[3*depth][(j+n/2)+(i+n/2)*n]; // D
-            matrix_list[3*depth-2][j+i*n/2] = matrix_list[3*depth+1][j+(i+n/2)*n]-matrix_list[3*depth+1][j+i*n]; // G-E
+            matrix_list[3*depth-3][j+i*m] = matrix_list[3*depth][(j+n/2)+(i+n/2)*n]; // D
+            matrix_list[3*depth-2][j+i*m] = matrix_list[3*depth+1][j+(i+n/2)*n]-matrix_list[3*depth+1][j+i*n]; // G-E
         }
     }
-    strassen(matrix_list, depth-1);
+    strassen(matrix_list, depth-1, sizes);
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth+2][j+i*n] += matrix_list[3*depth-1][j+i*n/2]; // + first quadrant
-            matrix_list[3*depth+2][j+(i+n/2)*n] += matrix_list[3*depth-1][j+i*n/2]; // + third quadrant
+            matrix_list[3*depth+2][j+i*n] += matrix_list[3*depth-1][j+i*m]; // + first quadrant
+            matrix_list[3*depth+2][j+(i+n/2)*n] += matrix_list[3*depth-1][j+i*m]; // + third quadrant
         }
     }
 
@@ -123,15 +119,15 @@ void strassen (vector<int>* matrix_list, int depth) {
     // compute p5
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth-3][j+i*n/2] = matrix_list[3*depth][j+i*n]+matrix_list[3*depth][(j+n/2)+(i+n/2)*n]; // A+D
-            matrix_list[3*depth-2][j+i*n/2] = matrix_list[3*depth+1][j+i*n]+matrix_list[3*depth+1][(j+n/2)+(i+n/2)*n]; // E+H
+            matrix_list[3*depth-3][j+i*m] = matrix_list[3*depth][j+i*n]+matrix_list[3*depth][(j+n/2)+(i+n/2)*n]; // A+D
+            matrix_list[3*depth-2][j+i*m] = matrix_list[3*depth+1][j+i*n]+matrix_list[3*depth+1][(j+n/2)+(i+n/2)*n]; // E+H
         }
     }
-    strassen(matrix_list, depth-1);
+    strassen(matrix_list, depth-1, sizes);
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth+2][j+i*n] += matrix_list[3*depth-1][j+i*n/2]; // + first quadrant
-            matrix_list[3*depth+2][(j+n/2)+(i+n/2)*n] += matrix_list[3*depth-1][j+i*n/2]; // + fourth quadrant
+            matrix_list[3*depth+2][j+i*n] += matrix_list[3*depth-1][j+i*m]; // + first quadrant
+            matrix_list[3*depth+2][(j+n/2)+(i+n/2)*n] += matrix_list[3*depth-1][j+i*m]; // + fourth quadrant
         }
     }
 
@@ -139,28 +135,28 @@ void strassen (vector<int>* matrix_list, int depth) {
     // compute p6
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth-3][j+i*n/2] = matrix_list[3*depth][(j+n/2)+i*n] - matrix_list[3*depth][(j+n/2)+(i+n/2)*n]; // B-D
-            matrix_list[3*depth-2][j+i*n/2] = matrix_list[3*depth+1][j+(i+n/2)*n] + matrix_list[3*depth+1][(j+n/2)+(i+n/2)*n]; // G+H
+            matrix_list[3*depth-3][j+i*m] = matrix_list[3*depth][(j+n/2)+i*n] - matrix_list[3*depth][(j+n/2)+(i+n/2)*n]; // B-D
+            matrix_list[3*depth-2][j+i*m] = matrix_list[3*depth+1][j+(i+n/2)*n] + matrix_list[3*depth+1][(j+n/2)+(i+n/2)*n]; // G+H
         }
     }
-    strassen(matrix_list, depth-1);
+    strassen(matrix_list, depth-1, sizes);
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth+2][j+i*n] += matrix_list[3*depth-1][j+i*n/2]; // + first quadrant
+            matrix_list[3*depth+2][j+i*n] += matrix_list[3*depth-1][j+i*m]; // + first quadrant
         }
     }
 
     // compute p7
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth-3][j+i*n/2] = matrix_list[3*depth][j+i*n] - matrix_list[3*depth][j+(i+n/2)*n]; // A-C
-            matrix_list[3*depth-2][j+i*n/2] = matrix_list[3*depth+1][j+i*n] + matrix_list[3*depth+1][(j+n/2)+i*n]; // E+F
+            matrix_list[3*depth-3][j+i*m] = matrix_list[3*depth][j+i*n] - matrix_list[3*depth][j+(i+n/2)*n]; // A-C
+            matrix_list[3*depth-2][j+i*m] = matrix_list[3*depth+1][j+i*n] + matrix_list[3*depth+1][(j+n/2)+i*n]; // E+F
         }
     }
-    strassen(matrix_list, depth-1);
+    strassen(matrix_list, depth-1, sizes);
     for (int i=0; i<n/2; i++) {
         for (int j=0; j<n/2; j++) {
-            matrix_list[3*depth+2][(j+n/2)+(i+n/2)*n] -= matrix_list[3*depth-1][j+i*n/2]; // - fourth quadrant
+            matrix_list[3*depth+2][(j+n/2)+(i+n/2)*n] -= matrix_list[3*depth-1][j+i*m]; // - fourth quadrant
         }
     }
 }
@@ -293,7 +289,7 @@ int main(int argc, char** argv) {
     // non-negative flag will use inputfile, negative flag will use RNG
     int dimension = stoi(argv[2]), flag = stoi(argv[1]);
 
-        // timing
+    // timing
     if (flag == -10) {
         for (int n=1; n<=dimension; n++) {
             // generate 2 random matrices
@@ -336,15 +332,10 @@ int main(int argc, char** argv) {
             cout << "case n = " << n <<": strassen took " << d1.count() << " ms | naive took " << d2.count() << " ms | " << endl;
         }
 
-
         return 0;
-    } else {
-        
-        
-
+    } 
+    else {
         const int count = ceil(log2(dimension))+1;
-        int upper = ((int)pow(2,count-1));
-
 
         // create array of matrices
         vector<int> sizes(count, 1);
@@ -355,6 +346,7 @@ int main(int argc, char** argv) {
         }
 
         // for (int s:sizes) cout << s << " ";
+        // cout << endl;
 
         vector<int> matrix_list[3*count];
         for (int d=0; d<count; d++) {
@@ -363,10 +355,6 @@ int main(int argc, char** argv) {
             }
         }
 
-
-
-
-        // ===================================================================================================
 
         if (flag >= 0) {
             ifstream INFILE;
@@ -378,30 +366,26 @@ int main(int argc, char** argv) {
             for (int num=0; num<2; num++) {
                 for (int i=0; i<dimension; i++) {
                     for (int j=0; j<dimension; j++) {
-                        INFILE >> matrix_list[3*count - 3 + num][j+upper*i];
+                        INFILE >> matrix_list[3*count - 3 + num][j+sizes[count-1]*i];
                     }
                 }
             }
             INFILE.close();
             
-            // if (flag > 0) {
-            //     for (int i: matrix_list[3*count-3]) cout << i << " ";
-            //     cout << endl;
-            //     for (int i: matrix_list[3*count-2]) cout << i << " ";
-            //     cout << endl;
-            // }
+            if (flag > 0) {
+                for (int i: matrix_list[3*count-3]) cout << i << " ";
+                cout << endl;
+                for (int i: matrix_list[3*count-2]) cout << i << " ";
+                cout << endl;
+            }
         }
-
-        // assign matrix_list[3*count - 3] = M1, matrix_list[3*count - 2] = M2. 
-        // Answer will be matrix_list[3*count-1] ..
-
-        if (flag == -1) { // stress test
+        if (flag == -1 || flag == -2) { // stress test
             srand((unsigned)time(NULL));
             
             for (int num=0; num<2; num++) {
                 for (int i=0; i<dimension; i++) {
                     for (int j=0; j<dimension; j++) {
-                        matrix_list[3*count - 3 + num][j+upper*i] = rand()%2;
+                        matrix_list[3*count - 3 + num][j+sizes[count-1]*i] = rand()%2;
                     }
                 }
             }
@@ -409,10 +393,10 @@ int main(int argc, char** argv) {
         
 
         auto t1 = chrono::high_resolution_clock::now();
-        strassen(matrix_list, count-1);
+        strassen(matrix_list, count-1, sizes);
 
         if (flag == 1 || flag == -1) {
-            for (int i=0; i<upper; i++) cout << matrix_list[3*count-1][i] << " ";
+            for (int i: matrix_list[3*count-1]) cout << i << " ";
             cout << endl;
         }
         
@@ -422,9 +406,9 @@ int main(int argc, char** argv) {
         
 
         if (flag) {
-            vector<int> naive = naive_multiply(matrix_list[3*count-3], matrix_list[3*count-2], upper);
+            naive_multiply_recursion(matrix_list, count-1, sizes);
             if (flag == 1 || flag == -1) {    
-                for (int i=0; i<upper; i++) cout << naive[i] << " ";
+                for (int i: matrix_list[3*count-1]) cout << i << " ";
                 cout << endl;
             }
         }
@@ -440,7 +424,7 @@ int main(int argc, char** argv) {
         
         // final answer
         for (int i=0; i<dimension; i++) {
-            cout << matrix_list[3*count-1][i+i*upper] << endl;
+            cout << matrix_list[3*count-1][i+i*sizes[count-1]] << endl;
         }
     }
 }
