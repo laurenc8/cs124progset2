@@ -287,10 +287,11 @@ int main(int argc, char** argv) {
     }
 
     // non-negative flag will use inputfile, negative flag will use RNG
+    // {-10: timing, -3: triangles}
     int dimension = stoi(argv[2]), flag = stoi(argv[1]);
 
-    // timing
-    if (flag == -10) {
+    
+    if (flag == -10) { // timing
         for (int n=1; n<=dimension; n++) {
             // generate 2 random matrices
             srand((unsigned)time(NULL));
@@ -334,6 +335,55 @@ int main(int argc, char** argv) {
 
         return 0;
     } 
+    else if (flag == -3) { // part 3 graphs
+        srand((unsigned)time(NULL));
+        const int count = ceil(log2(dimension))+1;
+
+        // create array of matrices
+        vector<int> sizes(count, 1);
+        sizes[count-1] = dimension + dimension%2;
+        for (int i=count-2; i> 0; i--) {
+            sizes[i] = sizes[i+1]/2;
+            sizes[i] += sizes[i]%2;
+        }
+        vector<int> matrix_list[3*count];
+        for (int d=0; d<count; d++) {
+            for (int j=0; j<3; j++) {
+                matrix_list[3*d+j] = vector<int>(sizes[d]*sizes[d], 0);
+            }
+        }
+        for (int p=1; p<=5; p++) {
+            // generate random graph
+            for (int i=0; i<sizes.back(); i++) {
+                for (int j=i; j<sizes.back(); j++) {
+                    int is_edge = ((rand()%100) < p)*(j!=i);
+                    matrix_list[3*count-3][j+i*sizes.back()] = is_edge;
+                    matrix_list[3*count-3][i+j*sizes.back()] = is_edge;
+                    matrix_list[3*count-2][j+i*sizes.back()] = is_edge;
+                    matrix_list[3*count-2][i+j*sizes.back()] = is_edge;
+                }
+            }
+            // cube it
+            strassen(matrix_list, count-1, sizes);
+            for (int i=0; i<sizes.back(); i++) {
+                for (int j=0; j<sizes.back(); j++) {
+                    matrix_list[3*count-2][j+i*sizes.back()] = matrix_list[3*count-1][j+i*sizes.back()];
+                }
+            }
+            strassen(matrix_list, count-1, sizes);
+
+            //calculate trace
+            int trace = 0;
+            for (int i=0; i<sizes.back(); i++) {
+                trace += matrix_list[3*count-1][i+i*sizes.back()];
+            }
+            trace /= 6;
+            cout << "p = " << p << ": trace = " << trace << endl;
+        }
+
+
+        return 0;
+    }
     else {
         const int count = ceil(log2(dimension))+1;
 
@@ -379,7 +429,7 @@ int main(int argc, char** argv) {
                 cout << endl;
             }
         }
-        if (flag == -1 || flag == -2) { // stress test
+        else if (flag == -1 || flag == -2) { // stress test
             srand((unsigned)time(NULL));
             
             for (int num=0; num<2; num++) {
@@ -390,6 +440,7 @@ int main(int argc, char** argv) {
                 }
             }
         }
+        
         
 
         auto t1 = chrono::high_resolution_clock::now();
