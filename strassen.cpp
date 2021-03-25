@@ -292,10 +292,14 @@ int main(int argc, char** argv) {
 
     
     if (flag == -10) { // timing
+        srand((unsigned)time(NULL));
+        ofstream OUTFILE;
+        OUTFILE.open("timing.csv");
+        OUTFILE << "n,strassen,naive\n";
+
         for (int n=1; n<=dimension; n++) {
             // generate 2 random matrices
-            srand((unsigned)time(NULL));
-
+            
             vector<int> sizes(2);
             sizes[1] = n + n%2;
             sizes[0] = sizes[1]/2;
@@ -308,31 +312,32 @@ int main(int argc, char** argv) {
                 }
             }
 
-            for (int i=0; i<n; i++) {
-                for (int j=0; j<n; j++) {
-                    matrix_list[3][j+i*n] = rand() % 2;
-                    matrix_list[4][j+i*n] = rand() % 2;
+            const int reps = 100;
+            chrono::time_point<chrono::high_resolution_clock> t1,t2,t3;
+            double time_strassen = 0, time_naive = 0;
+
+            // repeat for reps times, generate raondom matrices and add the time taken for each
+            for (int rep=0; rep<reps; rep++) {
+                for (int i=0; i<n; i++) {
+                    for (int j=0; j<n; j++) {
+                        matrix_list[3][j+i*n] = rand() % 8;
+                        matrix_list[4][j+i*n] = rand() % 8;
+                    }
                 }
+                t1 = chrono::high_resolution_clock::now();
+                strassen_time(matrix_list, 1, sizes);       
+                t2 = chrono::high_resolution_clock::now();
+                naive_multiply_recursion(matrix_list, 1, sizes);
+                t3 = chrono::high_resolution_clock::now();
+
+                time_strassen += chrono::duration_cast<chrono::milliseconds>(t2 - t1).count() /((double) reps);
+                time_naive += chrono::duration_cast<chrono::milliseconds>(t3 - t2).count() /((double) reps);
             }
             
-            // do the timing and compare
-            auto t1 = chrono::high_resolution_clock::now();
-            for (int i=0; i<10; i++) {
-                strassen_time(matrix_list, 1, sizes);
-            }            
-            auto t2 = chrono::high_resolution_clock::now();
-            auto d1 = chrono::duration_cast<chrono::milliseconds>(t2 - t1);
-            
-            for (int i=0; i<10; i++) {
-                naive_multiply_recursion(matrix_list, 1, sizes);
-            }   
-            
-            auto t3 = chrono::high_resolution_clock::now();
-            auto d2 = chrono::duration_cast<chrono::milliseconds>(t3 - t2);
-
-            cout << "case n = " << n <<": strassen took " << d1.count() << " ms | naive took " << d2.count() << " ms | " << endl;
+            OUTFILE << n << "," << time_strassen << "," << time_naive << "\n";
+            cout << "case n = " << n <<": strassen took " << time_strassen << " ms | naive took " << time_naive << " ms | " << endl;
         }
-
+        OUTFILE.close();
         return 0;
     } 
     else if (flag == -3) { // part 3 graphs
